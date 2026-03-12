@@ -184,11 +184,11 @@ function Home() {
               Papua Creative Economy
             </span>
             <h2 className="text-6xl md:text-8xl font-black tracking-tighter text-black mb-8 leading-[0.9] italic">
-              WARISAN <br />
-              <span className="text-emerald-600 not-italic">MASA DEPAN</span>
+              DARI HATI PAPUA, <br />
+              <span className="text-emerald-600 not-italic">UNTUK INDONESIA</span>
             </h2>
             <p className="text-xl text-stone-600 mb-12 max-xl mx-auto font-medium leading-relaxed">
-              Membawa keajaiban seni dan budaya Papua ke panggung dunia melalui ekonomi kreatif digital.
+              PACE adalah jembatan digital yang menghubungkan kreativitas Papua dengan pasar melalui sistem kepercayaan dan transaksi.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <button 
