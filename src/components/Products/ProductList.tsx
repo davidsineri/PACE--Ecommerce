@@ -139,6 +139,9 @@ export default function ProductList({ searchTerm, sortBy, filterCategory }: Prod
               <p className="text-lg font-black text-black whitespace-nowrap ml-4">Rp {product.price.toLocaleString('id-ID')}</p>
             </div>
             <p className="text-sm font-bold text-stone-400 uppercase tracking-widest">{product.category}</p>
+            {product.story && (
+              <p className="text-xs text-emerald-700 italic line-clamp-2 leading-relaxed mt-1">"{product.story}"</p>
+            )}
           </Link>
         </motion.div>
       ))}

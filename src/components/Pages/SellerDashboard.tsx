@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, ShoppingBag, Plus, Trash2 } from 'lucide-react';
+import { Package, ShoppingBag, Plus, Trash2, FileText } from 'lucide-react';
 
 export default function SellerDashboard() {
   const [activeTab, setActiveTab] = useState('Produk');
@@ -101,6 +101,12 @@ export default function SellerDashboard() {
         >
           <ShoppingBag className="inline-block mr-2" size={20} /> Pesanan Masuk
         </button>
+        <a 
+          href="/letter-generator"
+          className="px-6 py-3 rounded-full font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors"
+        >
+          <FileText className="inline-block mr-2" size={20} /> Surat Pejabat
+        </a>
       </div>
 
       {activeTab === 'Produk' && (

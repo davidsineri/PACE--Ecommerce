@@ -17,6 +17,7 @@ import Community from './components/Pages/Community';
 import Stories from './components/Layout/Stories';
 import SellerDashboard from './components/Pages/SellerDashboard';
 import AdminDashboard from './components/Pages/AdminDashboard';
+import LetterGenerator from './components/Pages/LetterGenerator';
 import Footer from './components/Layout/Footer';
 import { ShoppingBag, User, LogOut, Menu, X, Settings, Package, Heart, Moon, Sun } from 'lucide-react';
 import { ReactNode, useState, useEffect } from 'react';
@@ -154,7 +155,7 @@ function Home() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  const categories = ['Semua', 'Kriya & Kerajinan', 'Fashion & Kain', 'Seni & Ukiran', 'Makanan & Minuman', 'Hasil Bumi'];
+  const categories = ['Semua', 'Kriya & Kerajinan', 'Fashion & Kain', 'Seni & Ukiran', 'Makanan & Minuman', 'Hasil Bumi', 'Tempat Wisata'];
   const sortOptions = [
     { id: 'terbaru', label: 'Terbaru' },
     { id: 'termurah', label: 'Harga Terendah' },
@@ -183,19 +184,19 @@ function Home() {
             <span className="inline-block px-4 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-[0.3em] rounded-full mb-8">
               Papua Creative Economy
             </span>
-            <h2 className="text-6xl md:text-8xl font-black tracking-tighter text-black mb-8 leading-[0.9] italic">
+            <h2 className="text-6xl md:text-8xl font-extrabold tracking-tight text-black mb-8 leading-[1.1]">
               DARI HATI PAPUA, <br />
-              <span className="text-emerald-600 not-italic">UNTUK INDONESIA</span>
+              <span className="text-emerald-600">UNTUK INDONESIA</span>
             </h2>
             <p className="text-xl text-stone-600 mb-12 max-xl mx-auto font-medium leading-relaxed">
-              PACE adalah jembatan digital yang menghubungkan kreativitas Papua dengan pasar melalui sistem kepercayaan dan transaksi.
+              Menghubungkan kreativitas Papua dengan pasar melalui sistem yang terpercaya.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <button 
                 onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })}
                 className="nike-button text-lg px-12"
               >
-                Belanja Sekarang
+                Jelajahi Kekayaan Papua
               </button>
               <Link to="/community" className="text-black font-black uppercase tracking-widest text-sm hover:underline underline-offset-8">
                 Lihat Cerita Kami
@@ -994,6 +995,7 @@ export default function App() {
                     <Route path="/community" element={<PageWrapper><Community /></PageWrapper>} />
                     <Route path="/profile" element={<PageWrapper><Profile /></PageWrapper>} />
                     <Route path="/seller" element={<PageWrapper><SellerDashboard /></PageWrapper>} />
+                    <Route path="/letter-generator" element={<PageWrapper><LetterGenerator /></PageWrapper>} />
                     <Route path="/admin" element={<PageWrapper><AdminDashboard /></PageWrapper>} />
                   </Routes>
                 </AnimatePresence>

@@ -8,7 +8,7 @@ export default function About() {
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-5xl md:text-7xl font-black text-black italic mb-6"
+          className="text-5xl md:text-6xl font-extrabold text-black mb-6"
         >
           TENTANG PACE
         </motion.h1>
@@ -16,7 +16,7 @@ export default function About() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-2xl text-stone-600 font-medium leading-relaxed"
+          className="text-xl text-stone-600 font-medium leading-relaxed"
         >
           "PACE hadir sebagai jembatan digital yang menghubungkan karya autentik Papua dengan dunia, berlandaskan kepercayaan dan transparansi."
         </motion.p>

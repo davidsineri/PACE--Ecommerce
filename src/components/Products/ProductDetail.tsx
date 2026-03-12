@@ -89,7 +89,14 @@ export default function ProductDetail() {
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-black italic mb-4">{product.name}</h1>
             <p className="text-3xl font-black text-emerald-600 mb-6">Rp {product.price.toLocaleString('id-ID')}</p>
-            <p className="text-stone-600 leading-relaxed text-lg">{product.description}</p>
+            <p className="text-stone-600 leading-relaxed text-lg mb-6">{product.description}</p>
+            
+            {product.story && (
+              <div className="p-6 bg-stone-50 rounded-[24px] border border-stone-100">
+                <h4 className="text-xl font-black text-black italic mb-4">Cerita di Balik Produk</h4>
+                <p className="text-stone-600 leading-relaxed">{product.story}</p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">
