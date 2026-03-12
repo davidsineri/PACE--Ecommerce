@@ -188,8 +188,8 @@ function Home() {
               DARI HATI PAPUA, <br />
               <span className="text-emerald-600">UNTUK INDONESIA</span>
             </h2>
-            <p className="text-xl text-stone-600 mb-12 max-xl mx-auto font-medium leading-relaxed">
-              Menghubungkan kreativitas Papua dengan pasar melalui sistem yang terpercaya.
+            <p className="text-3xl md:text-4xl font-serif italic text-stone-800 mb-12 max-w-3xl mx-auto leading-tight">
+              "Setiap produk bercerita, setiap destinasi menginspirasi."
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <button 

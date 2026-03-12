@@ -92,9 +92,10 @@ export default function ProductDetail() {
             <p className="text-stone-600 leading-relaxed text-lg mb-6">{product.description}</p>
             
             {product.story && (
-              <div className="p-6 bg-stone-50 rounded-[24px] border border-stone-100">
-                <h4 className="text-xl font-black text-black italic mb-4">Cerita di Balik Produk</h4>
-                <p className="text-stone-600 leading-relaxed">{product.story}</p>
+              <div className="p-8 bg-stone-50 rounded-[32px] border border-stone-100 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                <h4 className="text-xl font-black text-black italic mb-4 uppercase tracking-widest">Cerita di Balik Produk</h4>
+                <p className="text-xl font-serif italic text-stone-700 leading-relaxed">"{product.story}"</p>
               </div>
             )}
           </div>

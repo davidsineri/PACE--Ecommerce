@@ -140,7 +140,7 @@ export default function ProductList({ searchTerm, sortBy, filterCategory }: Prod
             </div>
             <p className="text-sm font-bold text-stone-400 uppercase tracking-widest">{product.category}</p>
             {product.story && (
-              <p className="text-xs text-emerald-700 italic line-clamp-2 leading-relaxed mt-1">"{product.story}"</p>
+              <p className="text-sm font-serif italic text-emerald-700 line-clamp-2 leading-relaxed mt-2">"{product.story}"</p>
             )}
           </Link>
         </motion.div>
