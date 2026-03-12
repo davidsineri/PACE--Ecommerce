@@ -49,9 +49,13 @@ export default function SellerDashboard() {
         setShowAddForm(false);
         setNewProduct({ name: '', description: '', price: '', category: 'Kriya & Kerajinan', image_url: '' });
         fetchData();
+      } else {
+        const errorData = await res.json();
+        alert(`Gagal menambah produk: ${errorData.error || 'Terjadi kesalahan'}`);
       }
     } catch (err) {
       console.error(err);
+      alert('Terjadi kesalahan saat menambah produk.');
     }
   };
 

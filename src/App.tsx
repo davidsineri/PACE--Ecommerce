@@ -344,6 +344,7 @@ function Checkout() {
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting_payment' | 'processing' | 'success'>('idle');
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState<string>('pos');
+  const [tipAmount, setTipAmount] = useState<number>(0);
 
   const totalWeight = items.reduce((acc, item) => acc + (item.quantity * 250), 0);
   const remainder = totalWeight % 1000;
@@ -353,7 +354,7 @@ function Checkout() {
   const shippingCost = shippingMethod === 'pos' ? 100000 : shippingMethod === 'jnt' ? 110000 : shippingMethod === 'lion' ? 95000 : 25000;
   const totalWeightKg = Math.ceil(totalWeight / 1000) || 1;
   const totalShipping = shippingCost * totalWeightKg;
-  const finalTotal = totalPrice + totalShipping;
+  const finalTotal = totalPrice + totalShipping + tipAmount;
 
   if (items.length === 0) {
     return (
@@ -514,6 +515,32 @@ function Checkout() {
             </div>
           </div>
 
+          {/* Tip untuk Pengrajin */}
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-8 rounded-[32px] border border-yellow-200 dark:border-yellow-800/30">
+            <h3 className="text-xl font-black text-yellow-900 dark:text-yellow-100 italic mb-2">Dukung Pengrajin</h3>
+            <p className="text-sm text-yellow-800 dark:text-yellow-300 font-medium mb-4">
+              100% tip yang Anda berikan akan langsung disalurkan ke pengrajin Papua untuk mendukung kesejahteraan mereka.
+            </p>
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[10000, 25000, 50000].map((amount) => (
+                <button
+                  key={amount}
+                  onClick={() => setTipAmount(amount === tipAmount ? 0 : amount)}
+                  className={`py-2 rounded-xl border text-sm font-bold transition-all ${
+                    tipAmount === amount 
+                      ? 'bg-yellow-400 border-yellow-500 text-yellow-900' 
+                      : 'bg-white border-yellow-200 text-yellow-700 hover:bg-yellow-100'
+                  }`}
+                >
+                  Rp {amount / 1000}k
+                </button>
+              ))}
+            </div>
+            {tipAmount > 0 && (
+              <p className="text-xs font-bold text-yellow-700 text-center">Terima kasih atas dukungan Anda! ❤️</p>
+            )}
+          </div>
+
           <div className="bg-stone-50 dark:bg-stone-900 p-8 rounded-[32px] space-y-6 border border-stone-100 dark:border-stone-800">
             <h3 className="text-2xl font-black text-black dark:text-white italic">RINGKASAN</h3>
             <div className="space-y-4">
@@ -525,6 +552,12 @@ function Checkout() {
                 <span>Pengiriman ({totalWeightKg}kg)</span>
                 <span>Rp {totalShipping.toLocaleString('id-ID')}</span>
               </div>
+              {tipAmount > 0 && (
+                <div className="flex justify-between font-medium text-yellow-600 dark:text-yellow-500">
+                  <span>Tip Pengrajin</span>
+                  <span>Rp {tipAmount.toLocaleString('id-ID')}</span>
+                </div>
+              )}
               <div className="pt-4 border-t border-stone-200 dark:border-stone-800 flex justify-between text-xl font-black text-black dark:text-white">
                 <span>Total</span>
                 <span>Rp {finalTotal.toLocaleString('id-ID')}</span>
@@ -562,8 +595,11 @@ function Checkout() {
                 <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
-                <h3 className="text-3xl font-black italic text-black">PEMBAYARAN BERHASIL</h3>
-                <p className="text-stone-500 font-medium">Pesanan Anda sedang diproses dan akan segera dikirim.</p>
+                <h3 className="text-3xl font-black italic text-black">🎉 Pembayaran Berhasil!</h3>
+                <p className="text-stone-500 font-medium">
+                  Terima kasih telah mendukung produk Papua.<br />
+                  Admin akan menghubungi Anda.
+                </p>
               </div>
             ) : paymentStatus === 'waiting_payment' || paymentStatus === 'processing' ? (
               <div className="flex flex-col h-full overflow-hidden">

@@ -16,9 +16,9 @@ export default function About() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-xl text-stone-600 font-medium leading-relaxed"
+          className="text-2xl text-stone-600 font-medium leading-relaxed"
         >
-          Papua Creative Economy (PACE) adalah platform yang didedikasikan untuk mengangkat dan memberdayakan UMKM serta pengrajin lokal dari tanah Papua, membawa karya mereka ke panggung dunia.
+          "PACE hadir sebagai jembatan digital yang menghubungkan karya autentik Papua dengan dunia, berlandaskan kepercayaan dan transparansi."
         </motion.p>
       </section>
 

@@ -78,9 +78,15 @@ export default function ProductDetail() {
         {/* Product Info */}
         <div className="flex flex-col justify-center">
           <div className="mb-8">
-            <span className="inline-block px-4 py-1.5 bg-stone-100 text-stone-600 text-xs font-black uppercase tracking-[0.2em] rounded-full mb-4">
-              {product.category}
-            </span>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="inline-block px-4 py-1.5 bg-stone-100 text-stone-600 text-xs font-black uppercase tracking-[0.2em] rounded-full">
+                {product.category}
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-[0.1em] rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                100% Asli Papua
+              </span>
+            </div>
             <h1 className="text-4xl md:text-5xl font-black text-black italic mb-4">{product.name}</h1>
             <p className="text-3xl font-black text-emerald-600 mb-6">Rp {product.price.toLocaleString('id-ID')}</p>
             <p className="text-stone-600 leading-relaxed text-lg">{product.description}</p>
