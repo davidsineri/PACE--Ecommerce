@@ -25,9 +25,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         setShop(data);
+      } else {
+        console.warn(`Failed to fetch shop, status: ${res.status}`);
+        setShop(null);
       }
     } catch (err) {
       console.error('Failed to fetch shop:', err);
+      setShop(null);
     }
   };
 

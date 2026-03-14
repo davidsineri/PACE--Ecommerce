@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShoppingBag, Heart, Star, ArrowLeft, Users, MapPin, Clock } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Product } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -17,32 +18,74 @@ export default function ProductDetail() {
   
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { user } = useAuth();
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const fetchProductAndReviews = async () => {
+    setLoading(true);
+    try {
+      const [productRes, reviewsRes] = await Promise.all([
+        fetch(`/api/products/${id}`),
+        fetch(`/api/products/${id}/reviews`)
+      ]);
+
+      if (!productRes.ok) throw new Error('Produk tidak ditemukan');
+      
+      const productData = await productRes.json();
+      const reviewsData = reviewsRes.ok ? await reviewsRes.json() : [];
+
+      setProduct(productData);
+      setReviews(reviewsData);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProductAndReviews = async () => {
-      setLoading(true);
-      try {
-        const [productRes, reviewsRes] = await Promise.all([
-          fetch(`/api/products/${id}`),
-          fetch(`/api/products/${id}/reviews`)
-        ]);
-
-        if (!productRes.ok) throw new Error('Produk tidak ditemukan');
-        
-        const productData = await productRes.json();
-        const reviewsData = reviewsRes.ok ? await reviewsRes.json() : [];
-
-        setProduct(productData);
-        setReviews(reviewsData);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) fetchProductAndReviews();
   }, [id]);
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      alert('Silakan login untuk memberikan ulasan.');
+      return;
+    }
+    if (!newReview.comment.trim()) {
+      alert('Komentar tidak boleh kosong.');
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      const res = await fetch(`/api/products/${id}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          userName: user.name,
+          rating: newReview.rating,
+          comment: newReview.comment
+        })
+      });
+
+      if (res.ok) {
+        setNewReview({ rating: 5, comment: '' });
+        fetchProductAndReviews();
+      } else {
+        const errData = await res.json();
+        alert(`Gagal mengirim ulasan: ${errData.error || 'Terjadi kesalahan'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan saat mengirim ulasan.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   if (loading) {
     return <div className="max-w-7xl mx-auto px-4 py-24 text-center">Memuat produk...</div>;
@@ -154,6 +197,49 @@ export default function ProductDetail() {
       <div className="border-t border-stone-100 pt-16">
         <h3 className="text-3xl font-black text-black italic mb-8">ULASAN PELANGGAN</h3>
         
+        {user ? (
+          <form onSubmit={handleSubmitReview} className="mb-12 bg-stone-50 p-8 rounded-[32px] border border-stone-100">
+            <h4 className="text-xl font-black italic mb-4">Tulis Ulasan Anda</h4>
+            <div className="mb-4">
+              <label className="block text-sm font-bold text-stone-500 mb-2">Rating</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setNewReview({ ...newReview, rating: star })}
+                    className="focus:outline-none"
+                  >
+                    <Star size={24} className={star <= newReview.rating ? 'fill-yellow-400 text-yellow-400' : 'text-stone-300'} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-bold text-stone-500 mb-2">Komentar</label>
+              <textarea
+                required
+                value={newReview.comment}
+                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                className="w-full p-4 rounded-2xl border border-stone-200 focus:ring-2 focus:ring-black outline-none"
+                rows={3}
+                placeholder="Bagaimana pendapat Anda tentang produk ini?"
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmittingReview}
+              className="px-8 py-3 bg-black text-white rounded-full font-bold hover:bg-stone-800 transition-colors disabled:opacity-50"
+            >
+              {isSubmittingReview ? 'Mengirim...' : 'Kirim Ulasan'}
+            </button>
+          </form>
+        ) : (
+          <div className="mb-12 bg-stone-50 p-6 rounded-[24px] border border-stone-100 text-center">
+            <p className="text-stone-500 font-medium">Silakan <Link to="/login" className="text-emerald-600 font-bold hover:underline">login</Link> untuk memberikan ulasan.</p>
+          </div>
+        )}
+
         {reviews.length === 0 ? (
           <div className="bg-stone-50 rounded-[32px] p-8 text-center border border-stone-100">
             <p className="text-stone-500 font-medium">Belum ada ulasan untuk produk ini.</p>

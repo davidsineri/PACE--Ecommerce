@@ -340,6 +340,7 @@ function Home() {
 
 function Checkout() {
   const { items, totalPrice, clearCart, updateQuantity, removeFromCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting_payment' | 'processing' | 'success'>('idle');
@@ -382,7 +383,7 @@ function Checkout() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId: 'guest', // In a real app, use actual user ID
+            userId: user?.id || 'guest',
             total: finalTotal,
             items: items
           })
@@ -596,10 +597,10 @@ function Checkout() {
                 <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
-                <h3 className="text-3xl font-black italic text-black">🎉 Pembayaran Berhasil!</h3>
+                <h3 className="text-3xl font-black italic text-black">🎉 Pesanan Dibuat!</h3>
                 <p className="text-stone-500 font-medium">
                   Terima kasih telah mendukung produk Papua.<br />
-                  Admin akan menghubungi Anda.
+                  Silakan tunggu konfirmasi pembayaran dari admin.
                 </p>
               </div>
             ) : paymentStatus === 'waiting_payment' || paymentStatus === 'processing' ? (
@@ -743,7 +744,7 @@ function Profile() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await fetch('/api/orders?userId=guest');
+        const res = await fetch(`/api/orders?userId=${user?.id || 'guest'}`);
         if (res.ok) {
           const data = await res.json();
           setOrders(data);
@@ -757,7 +758,7 @@ function Profile() {
     if (localStorage.getItem('pace_is_seller') === 'true') {
       setIsSeller(true);
     }
-  }, []);
+  }, [user?.id]);
 
   const tabs = [
     { id: 'Pesanan Saya', icon: Package, label: 'Pesanan Saya' },
@@ -828,9 +829,19 @@ function Profile() {
                       <div className="flex justify-between items-center mb-6 pb-6 border-b border-stone-100">
                         <div>
                           <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">ID Pesanan: #{order.id}</p>
-                          <p className="text-sm font-medium text-stone-600">{new Date(order.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                          <p className="text-sm font-medium text-stone-600">{new Date(order.created_at || order.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                         </div>
-                        <span className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-xs font-black uppercase tracking-widest">Selesai</span>
+                        <span className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest ${
+                          order.status === 'PAID' ? 'bg-blue-100 text-blue-700' :
+                          order.status === 'SHIPPED' ? 'bg-yellow-100 text-yellow-700' :
+                          order.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' :
+                          'bg-stone-100 text-stone-700'
+                        }`}>
+                          {order.status === 'PAID' ? 'Dibayar' : 
+                           order.status === 'SHIPPED' ? 'Dikirim' : 
+                           order.status === 'COMPLETED' ? 'Selesai' : 
+                           order.status || 'Diproses'}
+                        </span>
                       </div>
                       <div className="space-y-4">
                         {order.items.map((item: any, j: number) => (
