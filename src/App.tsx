@@ -219,6 +219,50 @@ function Home() {
         </div>
       </section>
 
+      {/* Papua Heritage Positioning */}
+      <section className="bg-gradient-to-b from-stone-50 to-white py-16">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <span className="inline-block px-4 py-1.5 bg-amber-100 text-amber-800 text-xs font-black uppercase tracking-widest rounded-full mb-4">
+              Warisan Budaya Papua
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black text-black italic mb-4">
+              Setiap Produk Memiliki Cerita & Budaya yang Unik
+            </h2>
+            <p className="text-stone-600 text-lg font-medium">
+              Dukung pengrajin lokal Papua dan miliki piece of Papua's heritage. 
+              Setiap pembelian membantu melestarikan budaya dan tradisi nenek moyang.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-8 rounded-[32px] border border-stone-100 text-center hover:shadow-xl hover:border-emerald-200 transition-all">
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+              </div>
+              <h3 className="text-xl font-black italic mb-2">100% Asli Papua</h3>
+              <p className="text-stone-500 font-medium">Produk直接从 Papua highlands sourced, dijamin keasliannya</p>
+            </div>
+            
+            <div className="bg-white p-8 rounded-[32px] border border-stone-100 text-center hover:shadow-xl hover:border-emerald-200 transition-all">
+              <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <h3 className="text-xl font-black italic mb-2">Dukung Pengrajin Lokal</h3>
+              <p className="text-stone-500 font-medium">Pembelian Anda langsung mendukung keluarga pengrajin di Papua</p>
+            </div>
+            
+            <div className="bg-white p-8 rounded-[32px] border border-stone-100 text-center hover:shadow-xl hover:border-emerald-200 transition-all">
+              <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <h3 className="text-xl font-black italic mb-2">Kurasi Kualitas</h3>
+              <p className="text-stone-500 font-medium">Setiap produk melewati proses kurasi ketat sebelum dijual</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Featured Categories - Bento Grid Style */}
       <section className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[600px]">

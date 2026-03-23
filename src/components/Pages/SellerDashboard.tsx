@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Package, ShoppingBag, Plus, Trash2, FileText, Store } from 'lucide-react';
+import { Package, ShoppingBag, Plus, Trash2, FileText, Store, Sparkles } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { generateProductStory } from '../../services/aiService';
 
 export default function SellerDashboard() {
   const { user, shop, refreshShop } = useAuth();
@@ -19,6 +20,7 @@ export default function SellerDashboard() {
     name: '', description: '', price: '', category: 'Kriya & Kerajinan', image_url: ''
   });
   const [uploading, setUploading] = useState(false);
+  const [generatingStory, setGeneratingStory] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -127,6 +129,31 @@ export default function SellerDashboard() {
       alert('Terjadi kesalahan saat menambah produk.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGenerateStory = async () => {
+    if (!newProduct.name || !newProduct.description) {
+      alert('Mohon isi nama dan deskripsi produk terlebih dahulu.');
+      return;
+    }
+    setGeneratingStory(true);
+    try {
+      const story = await generateProductStory({
+        name: newProduct.name,
+        description: newProduct.description,
+        category: newProduct.category
+      });
+      setNewProduct(prev => ({ 
+        ...prev, 
+        description: prev.description + '\n\n[Story ID]: ' + story.story_id + '\n[Story EN]: ' + story.story_en + '\n[Culture]: ' + story.culture
+      }));
+      alert('Cerita produk berhasil dibuat!');
+    } catch (err) {
+      console.error(err);
+      alert('Gagal membuat cerita dengan AI.');
+    } finally {
+      setGeneratingStory(false);
     }
   };
 
@@ -298,8 +325,20 @@ export default function SellerDashboard() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-stone-400">Deskripsi Lengkap</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-widest text-stone-400">Deskripsi Lengkap</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateStory}
+                    disabled={generatingStory || !newProduct.name}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black uppercase tracking-widest rounded-full hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Sparkles size={14} />
+                    {generatingStory ? 'Membuat Story...' : 'AI Generate Story'}
+                  </button>
+                </div>
                 <textarea required placeholder="Jelaskan keunikan produk Anda..." value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="p-4 rounded-2xl border border-stone-200 w-full h-32 focus:ring-2 focus:ring-black outline-none"></textarea>
+                <p className="text-xs text-stone-400 italic">Klik "AI Generate Story" untuk membuat cerita produk otomatis dengan AI</p>
               </div>
               <div className="flex justify-end gap-4 pt-4">
                 <button type="button" onClick={() => setShowAddForm(false)} className="px-8 py-3 font-bold text-stone-500 hover:text-black transition-colors">Batal</button>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShoppingBag, Heart, Star, ArrowLeft, Users, MapPin, Clock } from 'lucide-react';
+import { ShoppingBag, Heart, Star, ArrowLeft, Users, MapPin, Clock, Globe, Sparkles, Check } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -15,6 +15,7 @@ export default function ProductDetail() {
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [showGroupBuyModal, setShowGroupBuyModal] = useState(false);
+  const [lang, setLang] = useState<'id' | 'en'>('id');
   
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -134,11 +135,82 @@ export default function ProductDetail() {
             <p className="text-3xl font-black text-emerald-600 mb-6">Rp {product.price.toLocaleString('id-ID')}</p>
             <p className="text-stone-600 leading-relaxed text-lg mb-6">{product.description}</p>
             
-            {product.story && (
-              <div className="p-8 bg-stone-50 rounded-[32px] border border-stone-100 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-                <h4 className="text-xl font-black text-black italic mb-4 uppercase tracking-widest">Cerita di Balik Produk</h4>
-                <p className="text-xl font-serif italic text-stone-700 leading-relaxed">"{product.story}"</p>
+            {/* Trust Badges */}
+            <div className="mt-6 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="flex items-center gap-2 text-emerald-800 text-sm font-bold">
+                  <Check size={16} className="text-emerald-600" />
+                  Produk asli dari Papua
+                </div>
+                <div className="flex items-center gap-2 text-emerald-800 text-sm font-bold">
+                  <Check size={16} className="text-emerald-600" />
+                  Mendukung pengrajin lokal
+                </div>
+                <div className="flex items-center gap-2 text-emerald-800 text-sm font-bold">
+                  <Check size={16} className="text-emerald-600" />
+                  Kurasi kualitas
+                </div>
+              </div>
+            </div>
+            
+            {/* Product Metadata */}
+            {product.metadata && (
+              <div className="mb-6 p-6 bg-stone-50 rounded-2xl border border-stone-100">
+                <div className="flex flex-wrap gap-4 mb-4">
+                  {product.metadata.origin && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin size={16} className="text-emerald-600" />
+                      <span className="font-bold text-stone-600">{product.metadata.origin}</span>
+                    </div>
+                  )}
+                  {product.metadata.artisan && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Users size={16} className="text-emerald-600" />
+                      <span className="font-bold text-stone-600">{product.metadata.artisan}</span>
+                    </div>
+                  )}
+                  {product.metadata.material && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Sparkles size={16} className="text-emerald-600" />
+                      <span className="font-bold text-stone-600">{product.metadata.material}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Story Section with Language Switch */}
+            {(product.metadata?.story_id || product.metadata?.story_en || product.story) && (
+              <div className="p-8 bg-gradient-to-br from-stone-50 to-emerald-50 rounded-[32px] border border-stone-100 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-500 to-amber-500"></div>
+                
+                {/* Language Switch */}
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-xl font-black text-black italic uppercase tracking-widest flex items-center gap-2">
+                    <Sparkles size={20} className="text-amber-500" />
+                    {lang === 'id' ? 'Cerita di Balik Produk' : 'Story Behind This Product'}
+                  </h4>
+                  <button
+                    onClick={() => setLang(lang === 'id' ? 'en' : 'id')}
+                    className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-stone-200 text-sm font-bold text-stone-600 hover:bg-stone-50 transition-colors"
+                  >
+                    <Globe size={16} />
+                    {lang === 'id' ? 'EN' : 'ID'}
+                  </button>
+                </div>
+                
+                <p className="text-xl font-serif italic text-stone-700 leading-relaxed">
+                  "{lang === 'id' ? (product.metadata?.story_id || product.story) : (product.metadata?.story_en || product.metadata?.story_id || product.story)}"
+                </p>
+                
+                {product.metadata?.culture && (
+                  <div className="mt-6 pt-6 border-t border-stone-200/50">
+                    <p className="text-sm font-bold text-emerald-700 uppercase tracking-widest mb-1">
+                      {lang === 'id' ? 'Budaya & Tradisi' : 'Culture & Tradition'}
+                    </p>
+                    <p className="text-stone-600 italic">{product.metadata.culture}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
