@@ -90,39 +90,6 @@ export default function Attractions() {
         </div>
       </section>
 
-      {/* Video Reference Section */}
-      <section className="max-w-7xl mx-auto px-4 mt-32 relative z-20">
-        <div className="bg-stone-100 dark:bg-stone-900 rounded-[60px] p-8 md:p-16 border border-stone-200 dark:border-stone-800">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
-            <div>
-              <span className="inline-block px-6 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-black uppercase tracking-[0.4em] rounded-full mb-6">
-                Video Eksklusif
-              </span>
-              <h2 className="text-4xl md:text-6xl font-black text-black dark:text-white italic uppercase tracking-tighter">
-                JELAJAHI <br />
-                <span className="text-emerald-600 dark:text-emerald-500">PAPUA</span>
-              </h2>
-            </div>
-            <p className="text-stone-600 dark:text-stone-400 font-medium max-w-md text-lg">
-              Saksikan keindahan alam dan budaya Papua melalui cuplikan video eksklusif ini sebelum Anda merencanakan perjalanan.
-            </p>
-          </div>
-          
-          <div className="aspect-video w-full rounded-[40px] overflow-hidden shadow-2xl bg-black relative">
-            <iframe 
-              width="100%" 
-              height="100%" 
-              src="https://www.youtube.com/embed/2ERrxG-Ii3I?autoplay=0&mute=0&controls=1&showinfo=0&rel=0&modestbranding=1" 
-              title="Papua Tourism Video" 
-              frameBorder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowFullScreen
-              className="absolute inset-0 w-full h-full"
-            ></iframe>
-          </div>
-        </div>
-      </section>
-
       {/* Cultural Note Section */}
       <section className="max-w-4xl mx-auto px-4 mt-32 text-center">
         <div className="w-20 h-1 bg-emerald-500 mx-auto mb-12"></div>
