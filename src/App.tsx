@@ -367,6 +367,7 @@ function Checkout() {
   const [dynamicShippingCost, setDynamicShippingCost] = useState<number>(0);
   const [loadingShipping, setLoadingShipping] = useState(false);
   const [cities, setCities] = useState<any[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
   const [destinationCity, setDestinationCity] = useState<string>('151'); // Jakarta
   const [tipAmount, setTipAmount] = useState<number>(0);
 
@@ -381,14 +382,18 @@ function Checkout() {
 
   useEffect(() => {
     const fetchCities = async () => {
+      setLoadingCities(true);
       try {
         const res = await fetch('/api/logistics/cities');
         if (res.ok) {
           const data = await res.json();
+          console.log('Fetched cities:', data);
           setCities(data);
         }
       } catch (err) {
         console.error('Failed to fetch cities:', err);
+      } finally {
+        setLoadingCities(false);
       }
     };
     fetchCities();
@@ -603,8 +608,11 @@ function Checkout() {
                     value={destinationCity}
                     onChange={(e) => setDestinationCity(e.target.value)}
                     className="w-full bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-2xl px-4 py-3 font-bold text-sm outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
+                    disabled={loadingCities}
                   >
-                    {cities.length > 0 ? (
+                    {loadingCities ? (
+                      <option>Memuat daftar kota...</option>
+                    ) : cities.length > 0 ? (
                       cities.map((city) => (
                         <option key={city.city_id} value={city.city_id}>
                           {city.type} {city.city_name}

@@ -375,42 +375,52 @@ const RAJAONGKIR_BASE_URL = `https://api.rajaongkir.com/${RAJAONGKIR_ACCOUNT_TYP
 
 app.get("/api/logistics/cities", async (req, res) => {
   try {
-    if (!RAJAONGKIR_API_KEY) {
-      // Fallback to default cities if no API key
-      return res.json([
-        { city_id: '154', city_name: 'Jayapura', type: 'Kota' },
-        { city_id: '151', city_name: 'Jakarta Pusat', type: 'Kota' },
-        { city_id: '444', city_name: 'Surabaya', type: 'Kota' },
-        { city_id: '23', city_name: 'Bandung', type: 'Kota' },
-        { city_id: '256', city_name: 'Malang', type: 'Kota' },
-        { city_id: '210', city_name: 'Makassar', type: 'Kota' },
-        { city_id: '457', city_name: 'Tangerang', type: 'Kota' },
-        { city_id: '399', city_name: 'Semarang', type: 'Kota' },
-        { city_id: '501', city_name: 'Yogyakarta', type: 'Kota' },
-        { city_id: '114', city_name: 'Denpasar', type: 'Kota' }
-      ]);
+    const fallbackCities = [
+      { city_id: '154', city_name: 'Jayapura', type: 'Kota' },
+      { city_id: '151', city_name: 'Jakarta Pusat', type: 'Kota' },
+      { city_id: '444', city_name: 'Surabaya', type: 'Kota' },
+      { city_id: '23', city_name: 'Bandung', type: 'Kota' },
+      { city_id: '256', city_name: 'Malang', type: 'Kota' },
+      { city_id: '210', city_name: 'Makassar', type: 'Kota' },
+      { city_id: '457', city_name: 'Tangerang', type: 'Kota' },
+      { city_id: '399', city_name: 'Semarang', type: 'Kota' },
+      { city_id: '501', city_name: 'Yogyakarta', type: 'Kota' },
+      { city_id: '114', city_name: 'Denpasar', type: 'Kota' },
+      { city_id: '327', city_name: 'Palembang', type: 'Kota' },
+      { city_id: '278', city_name: 'Medan', type: 'Kota' },
+      { city_id: '17', city_name: 'Balikpapan', type: 'Kota' },
+      { city_id: '41', city_name: 'Banjarmasin', type: 'Kota' },
+      { city_id: '255', city_name: 'Maluku Tengah', type: 'Kabupaten' },
+      { city_id: '430', city_name: 'Sorong', type: 'Kota' },
+      { city_id: '252', city_name: 'Manokwari', type: 'Kabupaten' },
+      { city_id: '292', city_name: 'Merauke', type: 'Kabupaten' },
+      { city_id: '293', city_name: 'Mimika', type: 'Kabupaten' }
+    ];
+
+    if (!RAJAONGKIR_API_KEY || RAJAONGKIR_API_KEY === '') {
+      console.log("No RajaOngkir API Key found, using fallback cities.");
+      return res.json(fallbackCities);
     }
     
     try {
+      console.log(`Fetching cities from RajaOngkir (${RAJAONGKIR_BASE_URL})...`);
       const response = await axios.get(`${RAJAONGKIR_BASE_URL}/city`, {
         headers: { 'key': RAJAONGKIR_API_KEY }
       });
       
-      return res.json(response.data.rajaongkir.results);
+      if (response.data?.rajaongkir?.results) {
+        console.log(`Successfully fetched ${response.data.rajaongkir.results.length} cities from RajaOngkir.`);
+        return res.json(response.data.rajaongkir.results);
+      } else {
+        console.warn("RajaOngkir response format unexpected:", response.data);
+        return res.json(fallbackCities);
+      }
     } catch (apiError: any) {
-      console.warn("RajaOngkir Cities API failed, falling back to defaults:", apiError.message);
-      return res.json([
-        { city_id: '154', city_name: 'Jayapura', type: 'Kota' },
-        { city_id: '151', city_name: 'Jakarta Pusat', type: 'Kota' },
-        { city_id: '444', city_name: 'Surabaya', type: 'Kota' },
-        { city_id: '23', city_name: 'Bandung', type: 'Kota' },
-        { city_id: '256', city_name: 'Malang', type: 'Kota' },
-        { city_id: '210', city_name: 'Makassar', type: 'Kota' },
-        { city_id: '457', city_name: 'Tangerang', type: 'Kota' },
-        { city_id: '399', city_name: 'Semarang', type: 'Kota' },
-        { city_id: '501', city_name: 'Yogyakarta', type: 'Kota' },
-        { city_id: '114', city_name: 'Denpasar', type: 'Kota' }
-      ]);
+      console.error("RajaOngkir Cities API failed:", apiError.message);
+      if (apiError.response) {
+        console.error("RajaOngkir API Error Response:", apiError.response.data);
+      }
+      return res.json(fallbackCities);
     }
   } catch (error) {
     return handleError(res, error, "Gagal mengambil data kota");
