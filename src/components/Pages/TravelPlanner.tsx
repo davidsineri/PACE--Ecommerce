@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Map, Calendar, Wallet, Sparkles, Loader2, ArrowRight } from 'lucide-react';
-import { generateTravelItinerary } from '../../services/aiService';
+import { Map, Calendar, Wallet, Sparkles, Loader2, ArrowRight, ShoppingBag } from 'lucide-react';
+import { generateTravelItinerary, smartSearchProducts } from '../../services/aiService';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
+import { Product } from '../../types';
 
 export default function TravelPlanner() {
   const [days, setDays] = useState(3);
@@ -11,15 +12,35 @@ export default function TravelPlanner() {
   const [budget, setBudget] = useState('Menengah');
   const [itinerary, setItinerary] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => setAllProducts(data))
+      .catch(err => console.error("Failed to fetch products:", err));
+  }, []);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setItinerary('');
+    setRecommendedProducts([]);
     
     try {
       const result = await generateTravelItinerary(days, interests, budget);
       setItinerary(result);
+
+      // Find recommended products based on the itinerary
+      if (allProducts.length > 0) {
+        // Create a summary query from the itinerary to avoid sending too much text
+        const query = `Rekomendasi paket wisata, tiket, atau oleh-oleh untuk itinerary: ${interests} di Papua selama ${days} hari dengan budget ${budget}.`;
+        const recommendations = await smartSearchProducts(query, allProducts);
+        // Take top 3 recommendations
+        setRecommendedProducts(recommendations.slice(0, 3));
+      }
+
     } catch (error) {
       console.error(error);
       setItinerary('Maaf, terjadi kesalahan saat membuat rencana perjalanan. Silakan coba lagi.');
@@ -136,10 +157,33 @@ export default function TravelPlanner() {
                 >
                   <ReactMarkdown>{itinerary}</ReactMarkdown>
                   
+                  {recommendedProducts.length > 0 && (
+                    <div className="mt-12 pt-12 border-t border-stone-100 dark:border-stone-800">
+                      <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-6 flex items-center gap-2">
+                        <Sparkles className="text-emerald-500" size={24} />
+                        Rekomendasi AI untuk Anda
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        {recommendedProducts.map(product => (
+                          <Link to={`/product/${product.id}`} key={product.id} className="group block bg-stone-50 dark:bg-stone-950 rounded-3xl overflow-hidden border border-stone-100 dark:border-stone-800 hover:border-emerald-500 transition-colors">
+                            <div className="aspect-square overflow-hidden bg-stone-200 dark:bg-stone-800">
+                              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
+                            </div>
+                            <div className="p-4">
+                              <p className="text-xs font-black text-stone-400 uppercase tracking-widest mb-1">{product.category}</p>
+                              <h4 className="font-bold text-black dark:text-white line-clamp-1 mb-2">{product.name}</h4>
+                              <p className="text-emerald-600 font-black">Rp {product.price.toLocaleString('id-ID')}</p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-16 pt-12 border-t border-stone-100 dark:border-stone-800 flex flex-col sm:flex-row gap-4 justify-between items-center">
                     <p className="font-bold text-stone-500">Siap untuk memulai petualangan?</p>
                     <Link to="/wisata" className="nike-button px-8 flex items-center gap-2 text-sm">
-                      Pesan Tiket Sekarang <ArrowRight size={16} />
+                      Lihat Semua Tiket Wisata <ArrowRight size={16} />
                     </Link>
                   </div>
                 </motion.div>

@@ -17,7 +17,6 @@ import Community from './components/Pages/Community';
 import Stories from './components/Layout/Stories';
 import SellerDashboard from './components/Pages/SellerDashboard';
 import AdminDashboard from './components/Pages/AdminDashboard';
-import LetterGenerator from './components/Pages/LetterGenerator';
 import Attractions from './components/Pages/Attractions';
 import AttractionDetail from './components/Pages/AttractionDetail';
 import TravelPlanner from './components/Pages/TravelPlanner';
@@ -62,9 +61,6 @@ function Navbar() {
             <Link to="/wisata" className="text-sm font-bold text-stone-600 dark:text-stone-300 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest">Wisata</Link>
             <Link to="/planner" className="text-sm font-bold text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors uppercase tracking-widest flex items-center gap-1">
               <Sparkles size={14} /> AI Planner
-            </Link>
-            <Link to="/surat" className="text-sm font-bold text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors uppercase tracking-widest flex items-center gap-1">
-              <Sparkles size={14} /> AI Surat
             </Link>
             <Link to="/community" className="text-sm font-bold text-stone-600 dark:text-stone-300 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest">Komunitas</Link>
           </nav>
@@ -137,9 +133,6 @@ function Navbar() {
             <Link to="/wisata" className="block text-lg font-bold text-black" onClick={() => setIsMenuOpen(false)}>Wisata</Link>
             <Link to="/planner" className="block text-lg font-bold text-emerald-600 flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
               <Sparkles size={20} /> AI Planner
-            </Link>
-            <Link to="/surat" className="block text-lg font-bold text-emerald-600 flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-              <Sparkles size={20} /> AI Surat
             </Link>
             <Link to="/community" className="block text-lg font-bold text-black" onClick={() => setIsMenuOpen(false)}>Komunitas</Link>
             {!user && (
@@ -366,14 +359,18 @@ function Checkout() {
   const [shippingMethod, setShippingMethod] = useState<string>('pos');
   const [tipAmount, setTipAmount] = useState<number>(0);
 
-  const totalWeight = items.reduce((acc, item) => acc + (item.quantity * 250), 0);
+  const physicalItems = items.filter(item => item.category !== 'Tiket Wisata');
+  const ticketItems = items.filter(item => item.category === 'Tiket Wisata');
+  const hasPhysicalItems = physicalItems.length > 0;
+
+  const totalWeight = physicalItems.reduce((acc, item) => acc + (item.quantity * 250), 0);
   const remainder = totalWeight % 1000;
   const spaceLeft = remainder === 0 ? 0 : 1000 - remainder;
   const weightPercentage = remainder === 0 ? 100 : (remainder / 1000) * 100;
 
   const shippingCost = shippingMethod === 'pos' ? 100000 : shippingMethod === 'jnt' ? 110000 : shippingMethod === 'lion' ? 95000 : 25000;
   const totalWeightKg = Math.ceil(totalWeight / 1000) || 1;
-  const totalShipping = shippingCost * totalWeightKg;
+  const totalShipping = hasPhysicalItems ? shippingCost * totalWeightKg : 0;
   const finalTotal = totalPrice + totalShipping + tipAmount;
 
   if (items.length === 0) {
@@ -468,72 +465,76 @@ function Checkout() {
         </div>
         
         <div className="space-y-8">
-          {/* Box Optimizer */}
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 p-8 rounded-[32px] border border-emerald-100 dark:border-emerald-800/30">
-            <h3 className="text-xl font-black text-emerald-900 dark:text-emerald-100 italic mb-2">Box Optimizer</h3>
-            <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium mb-4">
-              Total berat: <span className="font-bold">{totalWeight}g</span>. 
-              {spaceLeft > 0 ? ` Masih ada ruang ${spaceLeft}g untuk ongkir 1kg yang sama!` : ' Pas 1kg!'}
-            </p>
-            <div className="w-full bg-emerald-200 dark:bg-emerald-900/50 rounded-full h-3 mb-2">
-              <div className="bg-emerald-500 h-3 rounded-full transition-all duration-500" style={{ width: `${weightPercentage}%` }}></div>
-            </div>
-            {spaceLeft > 0 && (
-              <Link to="/" className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-widest">
-                + Tambah Produk Lain
-              </Link>
-            )}
-          </div>
+          {hasPhysicalItems && (
+            <>
+              {/* Box Optimizer */}
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 p-8 rounded-[32px] border border-emerald-100 dark:border-emerald-800/30">
+                <h3 className="text-xl font-black text-emerald-900 dark:text-emerald-100 italic mb-2">Box Optimizer</h3>
+                <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium mb-4">
+                  Total berat: <span className="font-bold">{totalWeight}g</span>. 
+                  {spaceLeft > 0 ? ` Masih ada ruang ${spaceLeft}g untuk ongkir 1kg yang sama!` : ' Pas 1kg!'}
+                </p>
+                <div className="w-full bg-emerald-200 dark:bg-emerald-900/50 rounded-full h-3 mb-2">
+                  <div className="bg-emerald-500 h-3 rounded-full transition-all duration-500" style={{ width: `${weightPercentage}%` }}></div>
+                </div>
+                {spaceLeft > 0 && (
+                  <Link to="/" className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline uppercase tracking-widest">
+                    + Tambah Produk Lain
+                  </Link>
+                )}
+              </div>
 
-          {/* Shipping Method */}
-          <div className="bg-stone-50 dark:bg-stone-900 p-8 rounded-[32px] border border-stone-100 dark:border-stone-800">
-            <h3 className="text-xl font-black text-black dark:text-white italic mb-4">Pilih Pengiriman</h3>
-            <div className="space-y-3">
-              <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'pos' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
-                <div className="flex items-center gap-3">
-                  <input type="radio" name="shipping" value="pos" checked={shippingMethod === 'pos'} onChange={() => setShippingMethod('pos')} className="w-4 h-4 text-black focus:ring-black" />
-                  <div>
-                    <p className="font-bold text-sm dark:text-white">POS Indonesia (Udara)</p>
-                    <p className="text-xs text-stone-500">2-4 Hari</p>
-                  </div>
-                </div>
-                <span className="font-black italic dark:text-white">Rp 100rb/kg</span>
-              </label>
-              
-              <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'jnt' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
-                <div className="flex items-center gap-3">
-                  <input type="radio" name="shipping" value="jnt" checked={shippingMethod === 'jnt'} onChange={() => setShippingMethod('jnt')} className="w-4 h-4 text-black focus:ring-black" />
-                  <div>
-                    <p className="font-bold text-sm dark:text-white">J&T Express</p>
-                    <p className="text-xs text-stone-500">2-3 Hari</p>
-                  </div>
-                </div>
-                <span className="font-black italic dark:text-white">Rp 110rb/kg</span>
-              </label>
+              {/* Shipping Method */}
+              <div className="bg-stone-50 dark:bg-stone-900 p-8 rounded-[32px] border border-stone-100 dark:border-stone-800">
+                <h3 className="text-xl font-black text-black dark:text-white italic mb-4">Pilih Pengiriman</h3>
+                <div className="space-y-3">
+                  <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'pos' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
+                    <div className="flex items-center gap-3">
+                      <input type="radio" name="shipping" value="pos" checked={shippingMethod === 'pos'} onChange={() => setShippingMethod('pos')} className="w-4 h-4 text-black focus:ring-black" />
+                      <div>
+                        <p className="font-bold text-sm dark:text-white">POS Indonesia (Udara)</p>
+                        <p className="text-xs text-stone-500">2-4 Hari</p>
+                      </div>
+                    </div>
+                    <span className="font-black italic dark:text-white">Rp 100rb/kg</span>
+                  </label>
+                  
+                  <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'jnt' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
+                    <div className="flex items-center gap-3">
+                      <input type="radio" name="shipping" value="jnt" checked={shippingMethod === 'jnt'} onChange={() => setShippingMethod('jnt')} className="w-4 h-4 text-black focus:ring-black" />
+                      <div>
+                        <p className="font-bold text-sm dark:text-white">J&T Express</p>
+                        <p className="text-xs text-stone-500">2-3 Hari</p>
+                      </div>
+                    </div>
+                    <span className="font-black italic dark:text-white">Rp 110rb/kg</span>
+                  </label>
 
-              <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'lion' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
-                <div className="flex items-center gap-3">
-                  <input type="radio" name="shipping" value="lion" checked={shippingMethod === 'lion'} onChange={() => setShippingMethod('lion')} className="w-4 h-4 text-black focus:ring-black" />
-                  <div>
-                    <p className="font-bold text-sm dark:text-white">Lion Parcel</p>
-                    <p className="text-xs text-stone-500">1-3 Hari</p>
-                  </div>
-                </div>
-                <span className="font-black italic dark:text-white">Rp 95rb/kg</span>
-              </label>
+                  <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'lion' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
+                    <div className="flex items-center gap-3">
+                      <input type="radio" name="shipping" value="lion" checked={shippingMethod === 'lion'} onChange={() => setShippingMethod('lion')} className="w-4 h-4 text-black focus:ring-black" />
+                      <div>
+                        <p className="font-bold text-sm dark:text-white">Lion Parcel</p>
+                        <p className="text-xs text-stone-500">1-3 Hari</p>
+                      </div>
+                    </div>
+                    <span className="font-black italic dark:text-white">Rp 95rb/kg</span>
+                  </label>
 
-              <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'pelni' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
-                <div className="flex items-center gap-3">
-                  <input type="radio" name="shipping" value="pelni" checked={shippingMethod === 'pelni'} onChange={() => setShippingMethod('pelni')} className="w-4 h-4 text-black focus:ring-black" />
-                  <div>
-                    <p className="font-bold text-sm dark:text-white">Kargo Laut (Pelni)</p>
-                    <p className="text-xs text-stone-500">2-3 Minggu</p>
-                  </div>
+                  <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'pelni' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
+                    <div className="flex items-center gap-3">
+                      <input type="radio" name="shipping" value="pelni" checked={shippingMethod === 'pelni'} onChange={() => setShippingMethod('pelni')} className="w-4 h-4 text-black focus:ring-black" />
+                      <div>
+                        <p className="font-bold text-sm dark:text-white">Kargo Laut (Pelni)</p>
+                        <p className="text-xs text-stone-500">2-3 Minggu</p>
+                      </div>
+                    </div>
+                    <span className="font-black text-emerald-600 italic">Rp 25rb/kg</span>
+                  </label>
                 </div>
-                <span className="font-black text-emerald-600 italic">Rp 25rb/kg</span>
-              </label>
-            </div>
-          </div>
+              </div>
+            </>
+          )}
 
           {/* Tip untuk Pengrajin */}
           <div className="bg-yellow-50 dark:bg-yellow-900/20 p-8 rounded-[32px] border border-yellow-200 dark:border-yellow-800/30">
@@ -568,10 +569,12 @@ function Checkout() {
                 <span>Subtotal</span>
                 <span>Rp {totalPrice.toLocaleString('id-ID')}</span>
               </div>
-              <div className="flex justify-between font-medium text-stone-600 dark:text-stone-400">
-                <span>Pengiriman ({totalWeightKg}kg)</span>
-                <span>Rp {totalShipping.toLocaleString('id-ID')}</span>
-              </div>
+              {hasPhysicalItems && (
+                <div className="flex justify-between font-medium text-stone-600 dark:text-stone-400">
+                  <span>Pengiriman ({totalWeightKg}kg)</span>
+                  <span>Rp {totalShipping.toLocaleString('id-ID')}</span>
+                </div>
+              )}
               {tipAmount > 0 && (
                 <div className="flex justify-between font-medium text-yellow-600 dark:text-yellow-500">
                   <span>Tip Pengrajin</span>
@@ -869,6 +872,14 @@ function Profile() {
                               <h5 className="font-black text-black italic">{item.name}</h5>
                               <p className="text-sm text-stone-500">{item.quantity} x Rp {item.price.toLocaleString('id-ID')}</p>
                             </div>
+                            {item.category === 'Tiket Wisata' && (
+                              <button 
+                                onClick={() => alert('E-Ticket akan dikirim ke email Anda atau dapat diunduh di sini.')}
+                                className="px-4 py-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-full text-xs font-bold uppercase tracking-widest transition-colors"
+                              >
+                                E-Ticket
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1024,11 +1035,9 @@ export default function App() {
                     <Route path="/wisata" element={<PageWrapper><Attractions /></PageWrapper>} />
                     <Route path="/wisata/:id" element={<PageWrapper><AttractionDetail /></PageWrapper>} />
                     <Route path="/planner" element={<PageWrapper><TravelPlanner /></PageWrapper>} />
-                    <Route path="/surat" element={<PageWrapper><LetterGenerator /></PageWrapper>} />
                     <Route path="/community" element={<PageWrapper><Community /></PageWrapper>} />
                     <Route path="/profile" element={<PageWrapper><Profile /></PageWrapper>} />
                     <Route path="/seller" element={<PageWrapper><SellerDashboard /></PageWrapper>} />
-                    <Route path="/letter-generator" element={<PageWrapper><LetterGenerator /></PageWrapper>} />
                     <Route path="/admin" element={<PageWrapper><AdminDashboard /></PageWrapper>} />
                   </Routes>
                 </AnimatePresence>

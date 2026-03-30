@@ -18,8 +18,37 @@ export default function AttractionDetail() {
       setLoadingTicket(true);
       fetch(`/api/products/${attraction.productId}`)
         .then(res => res.json())
-        .then(data => setTicketProduct(data))
-        .catch(err => console.error(err))
+        .then(data => {
+          if (data && !data.error) {
+            setTicketProduct(data);
+          } else {
+            // Create a mock product for the ticket if not in DB
+            setTicketProduct({
+              id: attraction.productId,
+              name: `Tiket Wisata: ${attraction.name}`,
+              description: `Tiket masuk / paket wisata untuk ${attraction.name}`,
+              price: 150000,
+              category: 'Tiket Wisata',
+              stock: 100,
+              image_url: attraction.image_url,
+              created_at: new Date().toISOString()
+            });
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          // Fallback to mock product on error
+          setTicketProduct({
+            id: attraction.productId!,
+            name: `Tiket Wisata: ${attraction.name}`,
+            description: `Tiket masuk / paket wisata untuk ${attraction.name}`,
+            price: 150000,
+            category: 'Tiket Wisata',
+            stock: 100,
+            image_url: attraction.image_url,
+            created_at: new Date().toISOString()
+          });
+        })
         .finally(() => setLoadingTicket(false));
     }
   }, [attraction]);

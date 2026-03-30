@@ -143,30 +143,3 @@ Output HARUS berupa array JSON berisi ID produk yang relevan, diurutkan dari yan
     );
   }
 }
-
-export async function generateFormalLetter(recipient: string, subject: string, context: string, senderName: string): Promise<string> {
-  const systemInstruction = `Anda adalah asisten ahli administrasi pemerintahan dan bisnis di Indonesia.
-Tugas Anda adalah membuat draf surat resmi (formal) yang ditujukan kepada pejabat daerah atau instansi pemerintah (khususnya di wilayah Papua).
-Surat harus menggunakan bahasa Indonesia yang sangat baku, sopan, dan sesuai dengan standar tata naskah dinas pemerintahan.
-Sertakan tempat dan tanggal (kosongkan atau beri placeholder), nomor surat (placeholder), lampiran, dan perihal.
-Gunakan format Markdown.`;
-
-  const prompt = `Tolong buatkan draf surat resmi dengan detail berikut:
-- Ditujukan kepada: ${recipient}
-- Perihal: ${subject}
-- Konteks/Isi yang ingin disampaikan: ${context}
-- Nama Pengirim/Pemohon: ${senderName}
-
-Buat surat selengkap mungkin dari kop surat (placeholder), tanggal, alamat tujuan, salam pembuka, isi, penutup, hingga tanda tangan.`;
-
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      systemInstruction,
-      temperature: 0.4,
-    }
-  });
-
-  return response.text || 'Maaf, saya gagal membuat draf surat saat ini. Silakan coba lagi.';
-}
