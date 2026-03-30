@@ -17,11 +17,7 @@ export default function Community() {
       const res = await fetch('/api/posts');
       if (res.ok) {
         const data = await res.json();
-        const postsWithLikes = data.map((post: any) => ({
-          ...post,
-          likesCount: Math.floor(Math.random() * 50) + 1 
-        }));
-        setPosts(postsWithLikes);
+        setPosts(data);
       }
     } catch (err) {
       console.error(err);
@@ -33,16 +29,28 @@ export default function Community() {
   useEffect(() => {
     fetchPosts();
 
-    // Setup Realtime subscription
-    const channel = supabase
+    // Setup Realtime subscription for posts
+    const postsChannel = supabase
       .channel('public:posts')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, (payload) => {
         setPosts((prev) => [payload.new, ...prev]);
       })
       .subscribe();
 
+    // Setup Realtime subscription for likes and comments to refresh counts
+    const activityChannel = supabase
+      .channel('public:activity')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'post_likes' }, () => {
+        fetchPosts(); // Refetch to get updated counts
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'post_comments' }, () => {
+        fetchPosts(); // Refetch to get updated counts
+      })
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(postsChannel);
+      supabase.removeChannel(activityChannel);
     };
   }, []);
 
@@ -71,27 +79,85 @@ export default function Community() {
     }
   };
 
-  const handleLike = (postId: string) => {
+  const handleLike = async (postId: string) => {
     if (!user) {
       alert('Silakan login untuk menyukai postingan.');
       return;
     }
     
-    setLikedPosts(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(postId)) {
-        newSet.delete(postId);
-      } else {
-        newSet.add(postId);
+    try {
+      const res = await fetch(`/api/posts/${postId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      });
+      
+      if (res.ok) {
+        // Realtime will handle the count update
       }
-      return newSet;
-    });
+    } catch (err) {
+      console.error('Failed to like post:', err);
+    }
   };
 
   const handleShare = (postId: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/#/community?post=${postId}`);
     setCopiedPostId(postId);
     setTimeout(() => setCopiedPostId(null), 2000);
+  };
+
+  const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
+  const [comments, setComments] = useState<Record<string, any[]>>({});
+  const [newComment, setNewComment] = useState('');
+
+  const fetchComments = async (postId: string) => {
+    try {
+      const res = await fetch(`/api/posts/${postId}/comments`);
+      if (res.ok) {
+        const data = await res.json();
+        setComments(prev => ({ ...prev, [postId]: data }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch comments:', err);
+    }
+  };
+
+  const handleComment = async (postId: string) => {
+    if (!newComment.trim()) return;
+    if (!user) {
+      alert('Silakan login untuk berkomentar.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: user.id,
+          userName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          content: newComment 
+        })
+      });
+      
+      if (res.ok) {
+        setNewComment('');
+        fetchComments(postId);
+      }
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    }
+  };
+
+  const toggleComments = (postId: string) => {
+    if (activeCommentPostId === postId) {
+      setActiveCommentPostId(null);
+    } else {
+      setActiveCommentPostId(postId);
+      if (!comments[postId]) {
+        fetchComments(postId);
+      }
+    }
   };
 
   return (
@@ -119,7 +185,8 @@ export default function Community() {
         ) : (
           posts.map((post, index) => {
             const isLiked = likedPosts.has(post.id);
-            const displayLikes = post.likesCount + (isLiked ? 1 : 0);
+            const displayLikes = (post.likesCount || 0) + (isLiked ? 1 : 0);
+            const showComments = activeCommentPostId === post.id;
             
             return (
               <motion.div 
@@ -127,7 +194,7 @@ export default function Community() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white dark:bg-stone-900 p-8 rounded-[32px] border border-stone-100 dark:border-stone-800 shadow-sm"
+                className="bg-white dark:bg-stone-900 p-8 rounded-[32px] border border-stone-100 dark:border-stone-800 shadow-sm overflow-hidden"
               >
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center font-bold text-emerald-600">
@@ -147,8 +214,11 @@ export default function Community() {
                     <Heart size={20} className={isLiked ? 'fill-current' : ''} /> 
                     {displayLikes} Suka
                   </button>
-                  <button className="flex items-center gap-2 text-stone-500 hover:text-blue-500 transition-colors font-medium">
-                    <MessageSquare size={20} /> Komentar
+                  <button 
+                    onClick={() => toggleComments(post.id)}
+                    className={`flex items-center gap-2 transition-colors font-medium ${showComments ? 'text-blue-500' : 'text-stone-500 hover:text-blue-500'}`}
+                  >
+                    <MessageSquare size={20} /> {post.commentsCount || 0} Komentar
                   </button>
                   <button 
                     onClick={() => handleShare(post.id)}
@@ -158,6 +228,46 @@ export default function Community() {
                     {copiedPostId === post.id ? 'Tersalin!' : 'Bagikan'}
                   </button>
                 </div>
+
+                {showComments && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    className="mt-6 pt-6 border-t border-stone-100 dark:border-stone-800"
+                  >
+                    <div className="space-y-4 mb-6">
+                      {comments[post.id]?.map((comment) => (
+                        <div key={comment.id} className="flex gap-3">
+                          <div className="w-8 h-8 bg-stone-100 dark:bg-stone-800 rounded-full flex items-center justify-center text-xs font-bold text-stone-500">
+                            {comment.user_name?.charAt(0) || 'U'}
+                          </div>
+                          <div className="bg-stone-50 dark:bg-stone-950 p-3 rounded-2xl flex-grow">
+                            <p className="text-xs font-bold dark:text-white mb-1">{comment.user_name}</p>
+                            <p className="text-sm text-stone-600 dark:text-stone-400">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {(!comments[post.id] || comments[post.id].length === 0) && (
+                        <p className="text-center text-stone-400 text-sm py-4">Belum ada komentar.</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Tulis komentar..."
+                        className="flex-grow bg-stone-100 dark:bg-stone-950 px-4 py-2 rounded-full text-sm outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
+                      />
+                      <button 
+                        onClick={() => handleComment(post.id)}
+                        className="bg-emerald-600 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-emerald-700 transition-colors"
+                      >
+                        Kirim
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
             );
           })

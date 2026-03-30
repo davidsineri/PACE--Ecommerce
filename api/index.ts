@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import axios from "axios";
 import { createClient } from '@supabase/supabase-js';
 import midtransClient from 'midtrans-client';
 
@@ -130,11 +131,89 @@ app.post("/api/products/:id/reviews", async (req, res) => {
 // 3. Community Posts
 app.get("/api/posts", async (req, res) => {
   try {
-    const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+    // Fetch posts with counts for likes and comments
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        likes_count:post_likes(count),
+        comments_count:post_comments(count)
+      `)
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    
+    // Transform counts from array of objects to numbers
+    const transformedData = data?.map(post => ({
+      ...post,
+      likesCount: post.likes_count?.[0]?.count || 0,
+      commentsCount: post.comments_count?.[0]?.count || 0
+    }));
+    
+    return res.json(transformedData || []);
+  } catch (error) {
+    return handleError(res, error, "Gagal mengambil postingan komunitas");
+  }
+});
+
+app.post("/api/posts/:id/like", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const postId = req.params.id;
+    
+    // Check if already liked
+    const { data: existingLike } = await supabase
+      .from('post_likes')
+      .select('*')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+      
+    if (existingLike) {
+      // Unlike
+      await supabase.from('post_likes').delete().eq('id', existingLike.id);
+      return res.json({ success: true, action: 'unliked' });
+    } else {
+      // Like
+      await supabase.from('post_likes').insert({ post_id: postId, user_id: userId });
+      return res.json({ success: true, action: 'liked' });
+    }
+  } catch (error) {
+    return handleError(res, error, "Gagal memproses suka pada postingan");
+  }
+});
+
+app.get("/api/posts/:id/comments", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('post_comments')
+      .select('*')
+      .eq('post_id', req.params.id)
+      .order('created_at', { ascending: true });
+      
     if (error) throw error;
     return res.json(data || []);
   } catch (error) {
-    return handleError(res, error, "Gagal mengambil postingan komunitas");
+    return handleError(res, error, "Gagal mengambil komentar");
+  }
+});
+
+app.post("/api/posts/:id/comments", async (req, res) => {
+  try {
+    const { userId, userName, content } = req.body;
+    const postId = req.params.id;
+    
+    const { error } = await supabase.from('post_comments').insert({
+      post_id: postId,
+      user_id: userId,
+      user_name: userName || 'Anonim',
+      content
+    });
+    
+    if (error) throw error;
+    return res.json({ success: true });
+  } catch (error) {
+    return handleError(res, error, "Gagal menambahkan komentar");
   }
 });
 
@@ -265,21 +344,63 @@ app.post("/api/payments/webhook", async (req, res) => {
   }
 });
 
-// Logistics API
+// Logistics API (RajaOngkir)
+const RAJAONGKIR_API_KEY = process.env.RAJAONGKIR_API_KEY || '';
+const RAJAONGKIR_BASE_URL = 'https://api.rajaongkir.com/starter'; // Default to starter
+
+app.get("/api/logistics/cities", async (req, res) => {
+  try {
+    if (!RAJAONGKIR_API_KEY) {
+      return res.status(400).json({ error: "RAJAONGKIR_API_KEY is not configured" });
+    }
+    
+    const response = await axios.get(`${RAJAONGKIR_BASE_URL}/city`, {
+      headers: { 'key': RAJAONGKIR_API_KEY }
+    });
+    
+    return res.json(response.data.rajaongkir.results);
+  } catch (error) {
+    return handleError(res, error, "Gagal mengambil data kota");
+  }
+});
+
 app.post("/api/logistics/shipping-cost", async (req, res) => {
   try {
     const { origin, destination, weight, courier } = req.body;
     
-    // TODO: Integrasikan dengan API nyata (misal: RajaOngkir)
-    // Contoh simulasi:
-    const cost = weight * 10000; 
+    if (!RAJAONGKIR_API_KEY) {
+      // Fallback to simulation if no API key
+      const cost = Math.ceil(weight / 1000) * 10000;
+      return res.json({ 
+        success: true, 
+        data: { courier, cost, estimated_delivery: "2-3 hari (Simulasi)" }
+      });
+    }
+
+    // RajaOngkir requires city IDs. If names are passed, we might need a lookup.
+    // For now, assume IDs are passed or use defaults if not.
+    const originId = origin || '154'; // Default: Jayapura (City ID 154)
+    const destinationId = destination || '151'; // Default: Jakarta (City ID 151)
+
+    const response = await axios.post(`${RAJAONGKIR_BASE_URL}/cost`, {
+      origin: originId,
+      destination: destinationId,
+      weight: weight,
+      courier: courier.toLowerCase()
+    }, {
+      headers: { 'key': RAJAONGKIR_API_KEY }
+    });
     
+    const result = response.data.rajaongkir.results[0];
+    const cost = result.costs[0].cost[0].value;
+    const etd = result.costs[0].cost[0].etd;
+
     return res.json({ 
       success: true, 
       data: {
-        courier,
+        courier: result.name,
         cost,
-        estimated_delivery: "2-3 hari"
+        estimated_delivery: `${etd} hari`
       }
     });
   } catch (error) {

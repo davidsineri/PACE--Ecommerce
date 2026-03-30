@@ -363,7 +363,11 @@ function Checkout() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting_payment' | 'processing' | 'success'>('idle');
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const [shippingMethod, setShippingMethod] = useState<string>('pos');
+  const [shippingMethod, setShippingMethod] = useState<string>('jne');
+  const [dynamicShippingCost, setDynamicShippingCost] = useState<number>(0);
+  const [loadingShipping, setLoadingShipping] = useState(false);
+  const [cities, setCities] = useState<any[]>([]);
+  const [destinationCity, setDestinationCity] = useState<string>('151'); // Jakarta
   const [tipAmount, setTipAmount] = useState<number>(0);
 
   const physicalItems = items.filter(item => item.category !== 'Tiket Wisata');
@@ -375,10 +379,56 @@ function Checkout() {
   const spaceLeft = remainder === 0 ? 0 : 1000 - remainder;
   const weightPercentage = remainder === 0 ? 100 : (remainder / 1000) * 100;
 
-  const shippingCost = shippingMethod === 'pos' ? 100000 : shippingMethod === 'jnt' ? 110000 : shippingMethod === 'lion' ? 95000 : 25000;
-  const totalWeightKg = Math.ceil(totalWeight / 1000) || 1;
-  const totalShipping = hasPhysicalItems ? shippingCost * totalWeightKg : 0;
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const res = await fetch('/api/logistics/cities');
+        if (res.ok) {
+          const data = await res.json();
+          setCities(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch cities:', err);
+      }
+    };
+    fetchCities();
+  }, []);
+
+  useEffect(() => {
+    if (hasPhysicalItems) {
+      const fetchShippingCost = async () => {
+        setLoadingShipping(true);
+        try {
+          const res = await fetch('/api/logistics/shipping-cost', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              origin: '154', // Jayapura
+              destination: destinationCity,
+              weight: totalWeight,
+              courier: shippingMethod
+            })
+          });
+          if (res.ok) {
+            const result = await res.json();
+            setDynamicShippingCost(result.data.cost);
+          }
+        } catch (err) {
+          console.error('Failed to fetch shipping cost:', err);
+          const totalWeightKg = Math.ceil(totalWeight / 1000) || 1;
+          const fallbackCost = shippingMethod === 'pos' ? 100000 : 110000;
+          setDynamicShippingCost(fallbackCost * totalWeightKg);
+        } finally {
+          setLoadingShipping(false);
+        }
+      };
+      fetchShippingCost();
+    }
+  }, [shippingMethod, totalWeight, hasPhysicalItems, destinationCity]);
+
+  const totalShipping = hasPhysicalItems ? dynamicShippingCost : 0;
   const finalTotal = totalPrice + totalShipping + tipAmount;
+  const totalWeightKg = Math.ceil(totalWeight / 1000) || 1;
 
   if (items.length === 0) {
     return (
@@ -522,50 +572,56 @@ function Checkout() {
 
               {/* Shipping Method */}
               <div className="bg-stone-50 dark:bg-stone-900 p-8 rounded-[32px] border border-stone-100 dark:border-stone-800">
-                <h3 className="text-xl font-black text-black dark:text-white italic mb-4">Pilih Pengiriman</h3>
+                <h3 className="text-xl font-black text-black dark:text-white italic mb-4">Tujuan Pengiriman</h3>
+                <div className="mb-6">
+                  <label className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">Kota Tujuan</label>
+                  <select 
+                    value={destinationCity}
+                    onChange={(e) => setDestinationCity(e.target.value)}
+                    className="w-full bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-2xl px-4 py-3 font-bold text-sm outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
+                  >
+                    {cities.length > 0 ? (
+                      cities.map((city) => (
+                        <option key={city.city_id} value={city.city_id}>
+                          {city.type} {city.city_name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="151">Jakarta Pusat</option>
+                    )}
+                  </select>
+                </div>
+
+                <h3 className="text-xl font-black text-black dark:text-white italic mb-4">Pilih Kurir</h3>
                 <div className="space-y-3">
+                  <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'jne' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
+                    <div className="flex items-center gap-3">
+                      <input type="radio" name="shipping" value="jne" checked={shippingMethod === 'jne'} onChange={() => setShippingMethod('jne')} className="w-4 h-4 text-black focus:ring-black" />
+                      <div>
+                        <p className="font-bold text-sm dark:text-white">JNE Express</p>
+                        <p className="text-xs text-stone-500">Reguler</p>
+                      </div>
+                    </div>
+                  </label>
+                  
                   <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'pos' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
                     <div className="flex items-center gap-3">
                       <input type="radio" name="shipping" value="pos" checked={shippingMethod === 'pos'} onChange={() => setShippingMethod('pos')} className="w-4 h-4 text-black focus:ring-black" />
                       <div>
-                        <p className="font-bold text-sm dark:text-white">POS Indonesia (Udara)</p>
-                        <p className="text-xs text-stone-500">2-4 Hari</p>
+                        <p className="font-bold text-sm dark:text-white">POS Indonesia</p>
+                        <p className="text-xs text-stone-500">Kilat Khusus</p>
                       </div>
                     </div>
-                    <span className="font-black italic dark:text-white">Rp 100rb/kg</span>
-                  </label>
-                  
-                  <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'jnt' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
-                    <div className="flex items-center gap-3">
-                      <input type="radio" name="shipping" value="jnt" checked={shippingMethod === 'jnt'} onChange={() => setShippingMethod('jnt')} className="w-4 h-4 text-black focus:ring-black" />
-                      <div>
-                        <p className="font-bold text-sm dark:text-white">J&T Express</p>
-                        <p className="text-xs text-stone-500">2-3 Hari</p>
-                      </div>
-                    </div>
-                    <span className="font-black italic dark:text-white">Rp 110rb/kg</span>
                   </label>
 
-                  <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'lion' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
+                  <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'tiki' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
                     <div className="flex items-center gap-3">
-                      <input type="radio" name="shipping" value="lion" checked={shippingMethod === 'lion'} onChange={() => setShippingMethod('lion')} className="w-4 h-4 text-black focus:ring-black" />
+                      <input type="radio" name="shipping" value="tiki" checked={shippingMethod === 'tiki'} onChange={() => setShippingMethod('tiki')} className="w-4 h-4 text-black focus:ring-black" />
                       <div>
-                        <p className="font-bold text-sm dark:text-white">Lion Parcel</p>
-                        <p className="text-xs text-stone-500">1-3 Hari</p>
+                        <p className="font-bold text-sm dark:text-white">TIKI</p>
+                        <p className="text-xs text-stone-500">Reguler</p>
                       </div>
                     </div>
-                    <span className="font-black italic dark:text-white">Rp 95rb/kg</span>
-                  </label>
-
-                  <label className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${shippingMethod === 'pelni' ? 'border-black dark:border-white bg-white dark:bg-black' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}>
-                    <div className="flex items-center gap-3">
-                      <input type="radio" name="shipping" value="pelni" checked={shippingMethod === 'pelni'} onChange={() => setShippingMethod('pelni')} className="w-4 h-4 text-black focus:ring-black" />
-                      <div>
-                        <p className="font-bold text-sm dark:text-white">Kargo Laut (Pelni)</p>
-                        <p className="text-xs text-stone-500">2-3 Minggu</p>
-                      </div>
-                    </div>
-                    <span className="font-black text-emerald-600 italic">Rp 25rb/kg</span>
                   </label>
                 </div>
               </div>
@@ -608,7 +664,11 @@ function Checkout() {
               {hasPhysicalItems && (
                 <div className="flex justify-between font-medium text-stone-600 dark:text-stone-400">
                   <span>Pengiriman ({totalWeightKg}kg)</span>
-                  <span>Rp {totalShipping.toLocaleString('id-ID')}</span>
+                  {loadingShipping ? (
+                    <span className="animate-pulse">Menghitung...</span>
+                  ) : (
+                    <span>Rp {totalShipping.toLocaleString('id-ID')}</span>
+                  )}
                 </div>
               )}
               {tipAmount > 0 && (
