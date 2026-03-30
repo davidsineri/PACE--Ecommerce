@@ -26,6 +26,12 @@ import Footer from './components/Layout/Footer';
 import { ShoppingBag, User, LogOut, Menu, X, Settings, Package, Heart, Moon, Sun, Sparkles } from 'lucide-react';
 import { ReactNode, useState, useEffect } from 'react';
 
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
+
 function Navbar() {
   const { user, signOut } = useAuth();
   const { totalItems } = useCart();
@@ -388,40 +394,69 @@ function Checkout() {
   }
 
   const handleProcessPayment = async () => {
-    if (!selectedMethod) return;
-    
     setPaymentStatus('processing');
     
-    // Simulate network request for payment processing
-    setTimeout(async () => {
-      try {
-        const res = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user?.id || 'guest',
-            total: finalTotal,
-            items: items
-          })
+    try {
+      // 1. Create order in database
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id || 'guest',
+          total: finalTotal,
+          items: items
+        })
+      });
+      
+      const orderData = await res.json();
+      if (!res.ok) throw new Error('Gagal membuat pesanan');
+
+      // 2. Get Snap Token
+      const tokenRes = await fetch('/api/payments/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderData.order_id,
+          totalAmount: finalTotal,
+          customerDetails: {
+            name: user?.user_metadata?.full_name || 'Guest',
+            email: user?.email || 'guest@example.com',
+            phone: '08123456789'
+          }
+        })
+      });
+      
+      const { token } = await tokenRes.json();
+      
+      // 3. Trigger Snap
+      if (window.snap) {
+        window.snap.pay(token, {
+          onSuccess: (result: any) => {
+            setPaymentStatus('success');
+            setTimeout(() => {
+              clearCart();
+              setShowPaymentModal(false);
+              navigate('/profile');
+            }, 2000);
+          },
+          onPending: (result: any) => {
+            alert('Menunggu pembayaran');
+            setPaymentStatus('idle');
+          },
+          onError: (result: any) => {
+            alert('Pembayaran gagal');
+            setPaymentStatus('idle');
+          },
+          onClose: () => {
+            setPaymentStatus('idle');
+          }
         });
-        
-        if (res.ok) {
-          setPaymentStatus('success');
-          setTimeout(() => {
-            clearCart();
-            setShowPaymentModal(false);
-            navigate('/profile');
-          }, 2000);
-        } else {
-          alert('Gagal membuat pesanan di database.');
-          setPaymentStatus('idle');
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Terjadi kesalahan saat menyimpan pesanan.');
-        setPaymentStatus('idle');
       }
-    }, 2000);
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan saat memproses pembayaran.');
+      setPaymentStatus('idle');
+    }
   };
 
   return (

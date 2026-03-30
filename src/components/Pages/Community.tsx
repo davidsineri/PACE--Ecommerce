@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { MessageSquare, Heart, Share2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 export default function Community() {
   const { user } = useAuth();
@@ -16,10 +17,9 @@ export default function Community() {
       const res = await fetch('/api/posts');
       if (res.ok) {
         const data = await res.json();
-        // Add a mock likes count to each post for UI purposes
         const postsWithLikes = data.map((post: any) => ({
           ...post,
-          likesCount: Math.floor(Math.random() * 50) + 1 // Mock initial likes
+          likesCount: Math.floor(Math.random() * 50) + 1 
         }));
         setPosts(postsWithLikes);
       }
@@ -32,6 +32,18 @@ export default function Community() {
 
   useEffect(() => {
     fetchPosts();
+
+    // Setup Realtime subscription
+    const channel = supabase
+      .channel('public:posts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, (payload) => {
+        setPosts((prev) => [payload.new, ...prev]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handlePost = async (e: React.FormEvent) => {
@@ -53,7 +65,6 @@ export default function Community() {
       });
       if (res.ok) {
         setNewPost('');
-        fetchPosts();
       }
     } catch (err) {
       console.error(err);
